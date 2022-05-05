@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:samples/form_validators/form_validators.dart';
+import 'package:samples/models/project.dart';
+import 'package:samples/repositories/projects_repository.dart';
 import 'package:samples/widgets/form_image.dart';
 
 import '../widgets/widgets.dart';
@@ -40,8 +43,36 @@ class __BodyState extends State<_Body> {
   final imageLink = 'assets/images/my_image.png';
   final titleController = TextEditingController();
   final bodyController = TextEditingController();
+  bool isLoading = true;
 
-  void submit() {}
+  void submit() async {
+    final project = Project(
+      link: SampleScreen.path,
+      content: {
+        'title': titleController.text,
+        'body': bodyController.text,
+      },
+    );
+    await GetIt.I<ProjectsRepository>().saveProject(project: project);
+  }
+
+  void fetchProjectAndPopulateFields() async {
+    final project = await GetIt.I<ProjectsRepository>()
+        .fetchProject(link: SampleScreen.path);
+    if (project != null) {
+      titleController.text = project.content['title'] ?? '';
+      bodyController.text = project.content['body'] ?? '';
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProjectAndPopulateFields();
+  }
 
   @override
   void dispose() {
@@ -52,6 +83,10 @@ class __BodyState extends State<_Body> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const CircularProgressIndicator();
+    }
+
     return Container(
       constraints: BoxConstraints(maxWidth: widget.maxWidth ?? double.infinity),
       padding: widget.padding,
