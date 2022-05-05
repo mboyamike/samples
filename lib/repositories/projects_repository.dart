@@ -11,23 +11,26 @@ class ProjectsRepository {
   final FirebaseFirestore _firebaseFirestore;
 
   Future<Project?> fetchProject({required String link}) async {
-    final document = await _firebaseFirestore
+    final query = await _firebaseFirestore
         .collection(projectsCollectionPath)
-        .doc(link)
+        .where('link', isEqualTo: link)
+        .limit(1)
         .get();
 
-    if (document.exists && document.data() != null) {
-      final project = Project.fromMap(document.data()!);
-      return project;
-    } else {
+    if (query.docs.isEmpty) {
       return null;
     }
+
+    final document = query.docs.first;
+
+    final project = Project.fromMap(document.data());
+    return project;
   }
 
   Future<Project> saveProject({required Project project}) async {
     await _firebaseFirestore
         .collection(projectsCollectionPath)
-        .doc(project.link)
+        .doc(project.id)
         .set(project.toMap());
     return project;
   }

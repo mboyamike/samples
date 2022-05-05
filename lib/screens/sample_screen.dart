@@ -1,9 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:samples/form_validators/form_validators.dart';
 import 'package:samples/models/project.dart';
 import 'package:samples/repositories/projects_repository.dart';
 import 'package:samples/widgets/form_image.dart';
+import 'package:uuid/uuid.dart';
 
 import '../widgets/widgets.dart';
 
@@ -44,24 +47,82 @@ class __BodyState extends State<_Body> {
   final titleController = TextEditingController();
   final bodyController = TextEditingController();
   bool isLoading = true;
+  Project? project;
 
-  void submit() async {
-    final project = Project(
-      link: SampleScreen.path,
-      content: {
-        'title': titleController.text,
-        'body': bodyController.text,
+  Map<String, dynamic> getProjectContent() {
+    return {
+      'title': titleController.text,
+      'body': bodyController.text,
+      'imageLink': imageLink,
+    };
+  }
+
+  void updateProjectVariable() {
+    if (project == null) {
+      final id = const Uuid().v4();
+      project = Project(
+        id: id,
+        link: SampleScreen.path,
+        content: getProjectContent(),
+      );
+    } else {
+      project = project!.copyWith(content: getProjectContent());
+    }
+  }
+
+  void showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return const AlertDialog(
+          title: Text('Successfully uploaded!'),
+          content: Text(
+            'Successfully uploaded project!',
+          ),
+        );
       },
     );
-    await GetIt.I<ProjectsRepository>().saveProject(project: project);
+  }
+
+  void showErrorDialog(String error) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return const AlertDialog(
+          title: Text('An error Occurred'),
+          content: Text(
+            'Looks like an error occurred. Please try again later',
+          ),
+        );
+      },
+    );
+  }
+
+  void submit() async {
+    updateProjectVariable();
+
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      await GetIt.I<ProjectsRepository>().saveProject(project: project!);
+      setState(() {
+        isLoading = false;
+      });
+      showSuccessDialog();
+    } catch (error) {
+      log(error.toString());
+      showErrorDialog(error.toString());
+    }
   }
 
   void fetchProjectAndPopulateFields() async {
-    final project = await GetIt.I<ProjectsRepository>()
+    final fetchedProject = await GetIt.I<ProjectsRepository>()
         .fetchProject(link: SampleScreen.path);
-    if (project != null) {
-      titleController.text = project.content['title'] ?? '';
-      bodyController.text = project.content['body'] ?? '';
+    if (fetchedProject != null) {
+      project = fetchedProject;
+      titleController.text = fetchedProject.content['title'] ?? '';
+      bodyController.text = fetchedProject.content['body'] ?? '';
     }
     setState(() {
       isLoading = false;
