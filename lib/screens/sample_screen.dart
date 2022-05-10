@@ -2,9 +2,13 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:provider/provider.dart';
 import 'package:samples/form_validators/form_validators.dart';
 import 'package:samples/models/project.dart';
+import 'package:samples/providers/auth_provider.dart';
 import 'package:samples/repositories/projects_repository.dart';
+import 'package:samples/repositories/users_repository.dart';
+import 'package:samples/screens/sign_in_screen.dart';
 import 'package:samples/widgets/form_image.dart';
 import 'package:uuid/uuid.dart';
 
@@ -17,6 +21,11 @@ class SampleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    if (authProvider.user == null) {
+      return const SignInScreen();
+    }
+
     return const Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -59,7 +68,7 @@ class __BodyState extends State<_Body> {
 
   void updateProjectVariable() {
     if (project == null) {
-      final id = const Uuid().v4();
+      final id = GetIt.I.get<ProjectsRepository>().autoID;
       project = Project(
         id: id,
         link: SampleScreen.path,

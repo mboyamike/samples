@@ -10,6 +10,8 @@ class ProjectsRepository {
 
   final FirebaseFirestore _firebaseFirestore;
 
+  String get autoID => _firebaseFirestore.collection('projects').doc().id;
+
   Future<Project?> fetchProject({required String link}) async {
     final query = await _firebaseFirestore
         .collection(projectsCollectionPath)
