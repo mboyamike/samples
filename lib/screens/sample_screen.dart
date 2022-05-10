@@ -4,13 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:samples/form_validators/form_validators.dart';
-import 'package:samples/models/project.dart';
+import 'package:samples/models/models.dart';
 import 'package:samples/providers/auth_provider.dart';
 import 'package:samples/repositories/projects_repository.dart';
-import 'package:samples/repositories/users_repository.dart';
 import 'package:samples/screens/sign_in_screen.dart';
 import 'package:samples/widgets/form_image.dart';
-import 'package:uuid/uuid.dart';
 
 import '../widgets/widgets.dart';
 
@@ -69,10 +67,12 @@ class __BodyState extends State<_Body> {
   void updateProjectVariable() {
     if (project == null) {
       final id = GetIt.I.get<ProjectsRepository>().autoID;
+      final user = context.read<AuthProvider>().user;
       project = Project(
         id: id,
         link: SampleScreen.path,
         content: getProjectContent(),
+        userDetails: user?.toMap() ?? {},
       );
     } else {
       project = project!.copyWith(content: getProjectContent());
